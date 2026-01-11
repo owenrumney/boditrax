@@ -11,14 +11,15 @@ A privacy-first, client-side web application designed to turn your raw **Boditra
   - **Weight Journey**: Track total weight, muscle, and fat mass over time.
   - **Body Composition**: Stacked analysis of your body's makeup.
   - **Metabolic Age vs. Actual Age**: See how your internal health compares to your years.
-  - **Visceral Fat & BMI**: Track critical health markers with built-in threshold warnings.
+  - **Metabolic Health**: Track Basal Metabolic Rate (BMR), Visceral Fat, and BMI.
+  - **Advanced Metrics**: Deep dive into Water Balance, Bone Mass, and Muscle Quality scores.
 - **Smart Time Filters**: Zoom into your recent progress with 3-month, 6-month, and 12-month views.
 - **Automated Insights**: Rule-based engine that detects "Composition Wins," "Plateaus," and "Metabolic Age Gains" automatically.
 - **Pro Navigation**: Click summary tiles to instantly scroll and highlight specific charts.
 
 ## 🚀 Getting Started
 
-1. **Export your data**: Log in to your Boditrax account and export your historical data as a **CSV**.
+1. **Export your data**: In the Boditrax App, go to **Settings** > **Data and Privacy** > **Download Data**.
 2. **Open the Visualiser**: Launch the [Boditrax Visualiser](https://boditrax-visualiser.netlify.app).
 3. **Upload**: Drag and drop your CSV file onto the dashboard.
 4. **Analyse**: Explore your trends and insights!

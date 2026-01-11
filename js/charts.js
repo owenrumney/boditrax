@@ -69,7 +69,12 @@ export class ChartManager {
                     x: {
                         type: 'time',
                         time: {
-                            unit: 'month'
+                            unit: 'month',
+                            tooltipFormat: 'dd MMM yyyy',
+                            displayFormats: {
+                                month: 'MMM yyyy',
+                                day: 'dd MMM'
+                            }
                         },
                         grid: {
                             display: false
@@ -263,6 +268,47 @@ export class ChartManager {
                 scales: {
                     x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
                     y: { beginAtZero: false }
+                },
+                plugins: {
+                    legend: { position: 'top', align: 'end' }
+                }
+            }
+        };
+
+        if (this.charts[canvasId]) {
+            this.charts[canvasId].destroy();
+        }
+        this.charts[canvasId] = new Chart(ctx, config);
+    }
+
+    /**
+     * Create a line chart with multiple metrics for comparison (e.g., Water types)
+     */
+    createMultiMetricChart(canvasId, scans, metrics, label) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        
+        const datasets = metrics.map(m => ({
+            label: m.label,
+            data: scans
+                .filter(s => s[m.key] !== undefined)
+                .map(s => ({ x: s.date, y: s[m.key] })),
+            borderColor: m.color,
+            backgroundColor: m.color + '22',
+            borderWidth: 2,
+            tension: 0.3,
+            pointRadius: 1,
+            fill: false
+        }));
+
+        const config = {
+            type: 'line',
+            data: { datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
+                    y: { beginAtZero: false, title: { display: true, text: label } }
                 },
                 plugins: {
                     legend: { position: 'top', align: 'end' }

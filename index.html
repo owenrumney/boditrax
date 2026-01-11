@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Boditrax Visualiser | Privacy-First Body Composition Analysis</title>
     <meta name="description" content="Analyse your Boditrax body composition data with interactive charts and AI insights. 100% client-side, your data stays in your browser.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,6 +19,26 @@
             <h1 class="hero-title">Boditrax Visualiser</h1>
             <p class="hero-subtitle">Turn your raw Boditrax exports into clear, actionable health insights. Simple, interactive, and private.</p>
             
+            <!-- Instructions Panel -->
+            <div style="width: 100%; max-width: 500px; margin-bottom: 2rem;">
+                <details class="help-panel" style="background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s ease;">
+                    <summary style="padding: 1rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem; outline: none;">
+                        <span style="background: var(--accent-blue); color: #0f172a; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem;">?</span>
+                        Where do I get my data?
+                    </summary>
+                    <div style="padding: 0 1rem 1.5rem 1rem; color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6;">
+                        <p style="margin-bottom: 0.75rem;">You can export your full Boditrax history directly from the official mobile app:</p>
+                        <ol style="padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                            <li>Open the <strong>Boditrax App</strong>.</li>
+                            <li>Go to <strong>Settings</strong> (⚙️ icon).</li>
+                            <li>Select <strong>Data and Privacy</strong>.</li>
+                            <li>Tap <strong>Download Data</strong>.</li>
+                        </ol>
+                        <p style="margin-top: 0.75rem;">This will generate a <code style="background: rgba(255,255,255,0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">.csv</code> file that you can drag and drop here.</p>
+                    </div>
+                </details>
+            </div>
+
             <div id="drop-zone" class="upload-zone">
                 <div class="upload-icon">📊</div>
                 <p><strong>Drop your Boditrax CSV here</strong></p>
@@ -33,20 +53,19 @@
 
         <!-- Dashboard State -->
         <main id="dashboard">
-            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <header class="dashboard-header">
                 <h2 id="user-greeting" style="font-size: 1.5rem;">Dashboard</h2>
-                <button id="reset-btn" style="background: none; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">Clear Data</button>
+                <button id="reset-btn">Clear Data</button>
             </header>
 
             <!-- Summaries -->
-            <div id="summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-            </div>
+            <div id="summary-grid"></div>
 
             <!-- Insights Panel -->
-            <div id="insights-panel" style="margin-bottom: 2rem; display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div id="insights-panel" style="display: none;">
+                <div class="dashboard-header" style="margin-bottom: 1.5rem;">
                     <h3 style="font-size: 1.25rem;">Key Insights</h3>
-                    <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="filter-row" style="margin-bottom: 0;">
                         <span style="color: var(--text-secondary); font-size: 0.875rem; font-weight: 600;">Time Range:</span>
                         <div class="custom-dropdown" id="range-dropdown">
                             <button class="dropdown-trigger">
@@ -60,53 +79,91 @@
                                 <div class="dropdown-item" data-value="12">Last 12 Months</div>
                                 <div class="dropdown-item" data-value="6">Last 6 Months</div>
                                 <div class="dropdown-item" data-value="3">Last 3 Months</div>
+                                <div class="dropdown-item" data-value="custom">Custom Range</div>
                             </div>
+                        </div>
+                        
+                        <div id="custom-date-inputs" class="custom-date-container hidden" style="margin-left: 1rem;">
+                            <input type="date" id="start-date" class="date-input" aria-label="Start Date">
+                            <span style="color: var(--text-secondary); font-size: 0.875rem;">to</span>
+                            <input type="date" id="end-date" class="date-input" aria-label="End Date">
                         </div>
                     </div>
                 </div>
-                <div id="insights-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
-                </div>
+                <div id="insights-container"></div>
             </div>
 
             <!-- Charts Grid -->
-            <div id="charts-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem;">
+            <div id="charts-container">
                 <!-- Main Weight Journey -->
-                <div id="card-weight" class="chart-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); min-height: 400px; grid-column: span 1;">
+                <div id="card-weight" class="chart-card">
                     <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary);">Weight Journey</h3>
-                    <div style="height: 300px; position: relative;">
+                    <div class="chart-wrapper">
                         <canvas id="weightJourneyChart"></canvas>
                     </div>
                 </div>
 
                 <!-- Body Composition -->
-                <div id="card-composition" class="chart-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); min-height: 400px;">
+                <div id="card-composition" class="chart-card">
                     <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary);">Body Composition (Recent)</h3>
-                    <div style="height: 300px; position: relative;">
+                    <div class="chart-wrapper">
                         <canvas id="compositionChart"></canvas>
                     </div>
                 </div>
 
                 <!-- Metabolic Age -->
-                <div id="card-metabolic" class="chart-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); min-height: 400px;">
+                <div id="card-metabolic" class="chart-card">
                     <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary);">Metabolic Age</h3>
-                    <div style="height: 300px; position: relative;">
+                    <div class="chart-wrapper">
                         <canvas id="metabolicAgeChart"></canvas>
                     </div>
                 </div>
 
                 <!-- Visceral Fat -->
-                <div id="card-visceral" class="chart-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); min-height: 400px;">
+                <div id="card-visceral" class="chart-card">
                     <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary);">Visceral Fat Rating</h3>
-                    <div style="height: 300px; position: relative;">
+                    <div class="chart-wrapper">
                         <canvas id="visceralFatChart"></canvas>
                     </div>
                 </div>
 
                 <!-- BMI -->
-                <div id="card-bmi" class="chart-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); min-height: 400px;">
+                <div id="card-bmi" class="chart-card">
                     <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary);">Body Mass Index (BMI)</h3>
-                    <div style="height: 300px; position: relative;">
+                    <div class="chart-wrapper">
                         <canvas id="bmiChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Metabolic Health (BMR) -->
+                <div id="card-bmr" class="chart-card">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary);">Basal Metabolic Rate</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="bmrChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Water Composition -->
+                <div id="card-water" class="chart-card">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary);">Body Water</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="waterChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Bone Mass -->
+                <div id="card-bone" class="chart-card">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary);">Bone Mass</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="boneMassChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Muscle & Leg Scores -->
+                <div id="card-scores" class="chart-card">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary);">Muscle & Performance Scores</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="scoresChart"></canvas>
                     </div>
                 </div>
             </div>

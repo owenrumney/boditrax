@@ -22,6 +22,10 @@ class App {
         const dropdownLabel = document.getElementById('current-range-label');
         const dropdownItems = rangeDropdown.querySelectorAll('.dropdown-item');
 
+        const customDateInputs = document.getElementById('custom-date-inputs');
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+
         dropdownTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
             rangeDropdown.classList.toggle('active');
@@ -38,10 +42,33 @@ class App {
                 item.classList.add('selected');
                 rangeDropdown.classList.remove('active');
 
+                // Toggle Custom Date Inputs
+                if (value === 'custom') {
+                    customDateInputs.classList.remove('hidden');
+                    // Initialize inputs if empty
+                    if (!startDateInput.value && this.data?.scans?.length > 0) {
+                       const dates = this.data.scans.map(s => s.date).sort((a,b) => a - b);
+                       startDateInput.valueAsDate = dates[0];
+                       endDateInput.valueAsDate = dates[dates.length - 1];
+                    }
+                } else {
+                    customDateInputs.classList.add('hidden');
+                }
+
                 // Update Data
                 this.currentRange = value;
                 this.renderCharts();
                 this.renderInsights();
+            });
+        });
+
+        // Date Input Listeners
+        [startDateInput, endDateInput].forEach(input => {
+            input.addEventListener('change', () => {
+                if (this.currentRange === 'custom') {
+                    this.renderCharts();
+                    this.renderInsights();
+                }
             });
         });
 
@@ -122,6 +149,21 @@ class App {
 
     getFilteredScans() {
         if (!this.data || !this.data.scans || this.data.scans.length === 0) return [];
+        
+        if (this.currentRange === 'custom') {
+            const startStr = document.getElementById('start-date').value;
+            const endStr = document.getElementById('end-date').value;
+            
+            if (!startStr || !endStr) return this.data.scans;
+
+            const start = new Date(startStr);
+            const end = new Date(endStr);
+            // Set end date to end of day to include scans on that day
+            end.setHours(23, 59, 59, 999);
+
+            return this.data.scans.filter(s => s.date >= start && s.date <= end);
+        }
+
         if (this.currentRange === 'all') return this.data.scans;
 
         // Find the latest scan date to use as a reference point (not "today")
@@ -154,7 +196,7 @@ class App {
 
         panel.style.display = 'block';
         container.innerHTML = insights.map(topic => `
-            <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); border-left: 4px solid ${this.getInsightColor(topic.type)};">
+            <div class="insight-card" style="border-left-color: ${this.getInsightColor(topic.type)};">
                 <div style="font-weight: 800; margin-bottom: 0.5rem; font-size: 1.1rem;">${topic.title}</div>
                 <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">${topic.description}</div>
             </div>
@@ -173,19 +215,29 @@ class App {
     renderCharts() {
         const scans = this.getFilteredScans();
         
-        // Even if empty, we might want to clear or update the charts
-        // The individual create methods handle this internally by destroying old instances
-        
         this.chartManager.createWeightJourneyChart('weightJourneyChart', scans);
         this.chartManager.createCompositionChart('compositionChart', scans);
         this.chartManager.createMetabolicAgeChart('metabolicAgeChart', scans);
         this.chartManager.createSingleMetricChart('visceralFatChart', scans, 'VisceralFatRating', 'Visceral Fat', '#f43f5e', 9, 'Healthy Threshold (≤9)');
         this.chartManager.createSingleMetricChart('bmiChart', scans, 'BodyMassIndex', 'BMI', '#38bdf8', 25, 'Normal BMI Threshold');
+        this.chartManager.createSingleMetricChart('bmrChart', scans, 'BasalMetabolicRatekJ', 'BMR (kJ)', '#c084fc');
+        this.chartManager.createSingleMetricChart('boneMassChart', scans, 'BoneMass', 'Bone Mass (kg)', '#94a3b8');
+        
+        // Custom multi-line charts for complexity
+        this.chartManager.createMultiMetricChart('waterChart', scans, [
+            { key: 'WaterMass', label: 'Total Water', color: '#38bdf8' },
+            { key: 'IntraCellularWaterMass', label: 'Intra-cellular', color: '#4ade80' }
+        ], 'Water Composition (kg)');
+
+        this.chartManager.createMultiMetricChart('scoresChart', scans, [
+            { key: 'LegMuscleScore', label: 'Leg Muscle Score', color: '#c084fc' },
+            { key: 'MuscleScore', label: 'Muscle Score', color: '#4ade80' },
+            { key: 'BoditraxScore', label: 'Total Boditrax Score', color: '#38bdf8' }
+        ], 'Performance Scores');
     }
 
     renderSummaries() {
         const grid = document.getElementById('summary-grid');
-        // Find the latest scan that has at least BodyWeight (to avoid empty "login" or partial scans)
         const validScans = this.data.scans.filter(s => s.BodyWeight !== undefined);
         const latest = validScans[validScans.length - 1];
         
@@ -193,14 +245,17 @@ class App {
 
         const metricsToShow = [
             { label: 'Weight', key: 'BodyWeight', unit: 'kg', targetCard: 'card-weight' },
-            { label: 'Fat Mass', key: 'FatMass', unit: 'kg', targetCard: 'card-composition' },
-            { label: 'Muscle Mass', key: 'MuscleMass', unit: 'kg', targetCard: 'card-composition' },
+            { label: 'BMR', key: 'BasalMetabolicRatekJ', unit: 'kJ', targetCard: 'card-bmr' },
+            { label: 'Bone Mass', key: 'BoneMass', unit: 'kg', targetCard: 'card-bone' },
+            { label: 'Muscle Score', key: 'MuscleScore', unit: '', targetCard: 'card-scores' },
+            { label: 'Leg Score', key: 'LegMuscleScore', unit: '', targetCard: 'card-scores' },
+            { label: 'BMI', key: 'BodyMassIndex', unit: '', targetCard: 'card-bmi' },
             { label: 'Visceral Fat', key: 'VisceralFatRating', unit: '', targetCard: 'card-visceral' },
             { label: 'Metabolic Age', key: 'MetabolicAge', unit: 'y', targetCard: 'card-metabolic' }
         ];
 
         grid.innerHTML = metricsToShow.map(m => `
-            <div data-target="${m.targetCard}" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s ease;">
+            <div data-target="${m.targetCard}" class="summary-card">
                 <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">${m.label}</div>
                 <div style="font-size: 1.5rem; font-weight: 800;">${latest[m.key] ?? '--'}<span style="font-size: 0.875rem; font-weight: 400; color: var(--text-secondary); margin-left: 0.25rem;">${m.unit}</span></div>
             </div>
